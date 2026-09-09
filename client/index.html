@@ -1,0 +1,101 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplayer Snake - 60 FPS Real-Time Arcade</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Full-screen Canvas -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Top In-Game HUD -->
+    <div id="hud" class="hud hidden">
+        <div class="hud-panel hud-left">
+            <div class="hud-item">
+                <span class="hud-label">SCORE</span>
+                <span id="scoreValue" class="hud-value neon-green">0</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">LENGTH</span>
+                <span id="lengthValue" class="hud-value neon-cyan">12</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">PLAYERS</span>
+                <span id="playersValue" class="hud-value neon-yellow">1</span>
+            </div>
+        </div>
+        <div class="hud-panel hud-right">
+            <div class="leaderboard-title">LEADERBOARD</div>
+            <ol id="leaderboardList" class="leaderboard-list">
+                <!-- Dynamically populated -->
+            </ol>
+        </div>
+        <div class="hud-status">
+            <div id="pingIndicator" class="status-pill">
+                <span class="status-dot online"></span>
+                <span id="serverStatusText">60 TPS CONNECTED</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Menu Overlay -->
+    <div id="menuOverlay" class="modal-overlay">
+        <div class="glass-card">
+            <div class="brand">
+                <h1 class="glow-title">CYBER<span class="neon-green">SNAKE</span></h1>
+                <p class="subtitle">60 TPS Authoritative Multiplayer Engine</p>
+            </div>
+
+            <form id="joinForm" class="menu-form" onsubmit="return false;">
+                <div class="input-group">
+                    <label for="playerName">PILOT CODENAME</label>
+                    <input type="text" id="playerName" maxlength="16" placeholder="Enter name..." autocomplete="off" spellcheck="false" autofocus>
+                </div>
+
+                <div class="control-hints">
+                    <div class="hint"><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span> or <span class="key">↑</span><span class="key">←</span><span class="key">↓</span><span class="key">→</span> to steer</div>
+                </div>
+
+                <button id="playBtn" type="button" class="btn btn-primary">
+                    <span class="btn-text">ENTER ARENA</span>
+                    <span class="btn-glow"></span>
+                </button>
+            </form>
+
+            <div class="connection-status">
+                <span id="connDot" class="status-dot"></span>
+                <span id="connText">Connecting to gateway...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Overlay -->
+    <div id="gameOverOverlay" class="modal-overlay hidden">
+        <div class="glass-card death-card">
+            <div class="skull-badge">💥</div>
+            <h2 class="death-title">SNAKE TERMINATED</h2>
+            <p id="deathReason" class="death-reason">Hit electric perimeter</p>
+
+            <div class="death-stats">
+                <div class="stat-box">
+                    <span class="stat-lbl">FINAL SCORE</span>
+                    <span id="finalScore" class="stat-val neon-green">0</span>
+                </div>
+            </div>
+
+            <button id="respawnBtn" type="button" class="btn btn-primary">
+                <span class="btn-text">RESPAWN</span>
+                <span class="btn-glow"></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Minimap Radar -->
+    <canvas id="minimapCanvas" class="minimap hidden" width="160" height="160"></canvas>
+
+    <script src="game.js"></script>
+</body>
+</html>
