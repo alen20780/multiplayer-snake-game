@@ -146,7 +146,7 @@ func (g *Game) tickSimulation(dt float64) {
 		}
 	}
 
-	// 5. Detect and Resolve Collisions
+	// 5. Detect and Resolve Collisions & Check Win/Fill Canvas Conditions
 	g.resolveCollisions()
 
 	// 6. Replenish Food
@@ -212,6 +212,7 @@ func (g *Game) processLeaves() {
 				}
 				delete(g.players, req.PlayerID)
 				log.Printf("[GameServer] Player '%s' (ID: %s) left the game", p.Name, req.PlayerID)
+				g.checkLastPlayerWin("Only remaining player standing - Victory!")
 			}
 		default:
 			return
@@ -228,6 +229,26 @@ func (g *Game) processInputs() {
 			}
 		default:
 			return
+		}
+	}
+}
+
+func (g *Game) checkLastPlayerWin(reason string) {
+	// Count how many players started/joined vs how many are currently alive
+	alivePlayers := make([]*Player, 0)
+	for _, p := range g.players {
+		if p.Snake != nil && p.Snake.Alive {
+			alivePlayers = append(alivePlayers, p)
+		}
+	}
+
+	// If there were multiple participants and exactly 1 alive snake remains
+	if len(alivePlayers) == 1 && len(g.players) > 1 {
+		winner := alivePlayers[0]
+		log.Printf("[GameServer] Player '%s' WON as the last player standing!", winner.Name)
+		winner.Snake.Alive = false
+		if winner.Client != nil {
+			winner.Client.SendGameOver(winner.Snake.Score, reason, true)
 		}
 	}
 }
@@ -315,16 +336,22 @@ func (g *Game) resolveCollisions() {
 	}
 
 	// Apply deaths and drop food
+	hadDeaths := len(deadSnakes) > 0
 	for id, reason := range deadSnakes {
 		if p, ok := g.players[id]; ok && p.Snake != nil && p.Snake.Alive {
 			g.killSnake(p.Snake, reason)
 			if p.Client != nil {
-				p.Client.SendGameOver(p.Snake.Score, reason)
+				p.Client.SendGameOver(p.Snake.Score, reason, false)
 			}
 		}
 	}
 
-	// 4. Food Collisions
+	// If deaths occurred, check if only one survivor remains (Last Snake Standing Win)
+	if hadDeaths {
+		g.checkLastPlayerWin("All opponents eliminated - Victory!")
+	}
+
+	// 4. Food Collisions & Max Canvas Fill Condition
 	for _, p := range g.players {
 		if p.Snake == nil || !p.Snake.Alive {
 			continue
@@ -333,6 +360,15 @@ func (g *Game) resolveCollisions() {
 		if food != nil {
 			p.Snake.Grow(food.Value)
 			g.foodManager.RemoveFood(food.ID)
+
+			// Check if snake length has filled the canvas / reached victory limit
+			if g.config.MaxCanvasLength > 0 && p.Snake.Length >= g.config.MaxCanvasLength {
+				log.Printf("[GameServer] Snake '%s' filled the canvas (Length: %d)! VICTORY!", p.Name, p.Snake.Length)
+				p.Snake.Alive = false
+				if p.Client != nil {
+					p.Client.SendGameOver(p.Snake.Score, fmt.Sprintf("Snake filled the entire canvas! (Max length %d achieved)", g.config.MaxCanvasLength), true)
+				}
+			}
 		}
 	}
 }

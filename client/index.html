@@ -72,11 +72,11 @@
         </div>
     </div>
 
-    <!-- Game Over Overlay -->
+    <!-- Game Over / Victory Overlay -->
     <div id="gameOverOverlay" class="modal-overlay hidden">
-        <div class="glass-card death-card">
-            <div class="skull-badge">💥</div>
-            <h2 class="death-title">SNAKE TERMINATED</h2>
+        <div id="endGameCard" class="glass-card death-card">
+            <div id="endGameBadge" class="skull-badge">💥</div>
+            <h2 id="endGameTitle" class="death-title">SNAKE TERMINATED</h2>
             <p id="deathReason" class="death-reason">Hit electric perimeter</p>
 
             <div class="death-stats">
@@ -87,7 +87,7 @@
             </div>
 
             <button id="respawnBtn" type="button" class="btn btn-primary">
-                <span class="btn-text">RESPAWN</span>
+                <span id="respawnBtnText" class="btn-text">PLAY AGAIN</span>
                 <span class="btn-glow"></span>
             </button>
         </div>

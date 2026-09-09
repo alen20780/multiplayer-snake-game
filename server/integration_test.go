@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -12,17 +15,32 @@ import (
 )
 
 func TestLiveMultiplayerWebSocket(t *testing.T) {
-	u := url.URL{Scheme: "ws", Host: "localhost:8080", Path: "/ws"}
+	cfg := DefaultConfig
+	hub := NewHub()
+	game := NewGame(cfg, hub)
+
+	go hub.Run()
+	game.Start()
+	defer game.Stop()
+
+	// Create in-memory test server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ServeWs(hub, game, w, r)
+	}))
+	defer server.Close()
+
+	u, _ := url.Parse(server.URL)
+	wsURL := "ws://" + u.Host
 
 	// Connect Client 1
-	c1, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	c1, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	if err != nil {
 		t.Fatalf("Client 1 failed to connect: %v", err)
 	}
 	defer c1.Close()
 
 	// Connect Client 2
-	c2, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	c2, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	if err != nil {
 		t.Fatalf("Client 2 failed to connect: %v", err)
 	}
@@ -59,12 +77,20 @@ func TestLiveMultiplayerWebSocket(t *testing.T) {
 			if err != nil {
 				continue
 			}
-			var state StateMessage
-			if err := json.Unmarshal(data, &state); err == nil && state.Type == MsgTypeState {
-				if len(state.Snakes) == 2 {
-					receivedTwoPlayers = true
-					fmt.Printf("[Test] Verified 2 players in authoritative state snapshot: %s and %s\n",
-						state.Snakes[0].Name, state.Snakes[1].Name)
+			// Handle potentially merged lines
+			lines := strings.Split(string(data), "\n")
+			for _, line := range lines {
+				if len(strings.TrimSpace(line)) == 0 {
+					continue
+				}
+				var state StateMessage
+				if err := json.Unmarshal([]byte(line), &state); err == nil && state.Type == MsgTypeState {
+					if len(state.Snakes) == 2 {
+						receivedTwoPlayers = true
+						fmt.Printf("[Test] Verified 2 players in authoritative state snapshot: %s and %s\n",
+							state.Snakes[0].Name, state.Snakes[1].Name)
+						break
+					}
 				}
 			}
 		}

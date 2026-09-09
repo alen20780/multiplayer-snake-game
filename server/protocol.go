@@ -12,6 +12,7 @@ const (
 	MsgTypeWelcome  = "welcome"
 	MsgTypeState    = "state"
 	MsgTypeGameOver = "game_over"
+	MsgTypeVictory  = "victory"
 	MsgTypePong     = "pong"
 )
 
@@ -52,11 +53,12 @@ type FoodDTO struct {
 
 // WelcomeMessage sent to client immediately on connection or join
 type WelcomeMessage struct {
-	Type        string  `json:"type"`
-	PlayerID    string  `json:"playerId"`
-	WorldWidth  float64 `json:"worldWidth"`
-	WorldHeight float64 `json:"worldHeight"`
-	TickRate    int     `json:"tickRate"`
+	Type            string  `json:"type"`
+	PlayerID        string  `json:"playerId"`
+	WorldWidth      float64 `json:"worldWidth"`
+	WorldHeight     float64 `json:"worldHeight"`
+	TickRate        int     `json:"tickRate"`
+	MaxCanvasLength int     `json:"maxCanvasLength"`
 }
 
 // StateMessage broadcasts world snapshot at 60 TPS
@@ -73,4 +75,5 @@ type GameOverMessage struct {
 	Type       string `json:"type"`
 	FinalScore int    `json:"finalScore"`
 	Reason     string `json:"reason"`
+	Won        bool   `json:"won"`
 }

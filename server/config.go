@@ -17,6 +17,7 @@ type Config struct {
 	FoodScoreBonus     int           // Score gained per normal food
 	MaxPlayers         int           // Maximum simultaneous players
 	DeadDropPercentage float64       // Ratio of dead snake segments converted to food
+	MaxCanvasLength    int           // Length when snake fills canvas / reaches victory cap (e.g. 200)
 }
 
 // DefaultConfig provides recommended game settings
@@ -34,4 +35,5 @@ var DefaultConfig = Config{
 	FoodScoreBonus:     10,    // Points per regular food
 	MaxPlayers:         200,   // Cap simultaneous players
 	DeadDropPercentage: 0.6,   // Drop 60% of body as food upon death
+	MaxCanvasLength:    200,   // Fills canvas / arena capacity
 }

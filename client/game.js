@@ -20,6 +20,10 @@
 
     const menuOverlay = document.getElementById('menuOverlay');
     const gameOverOverlay = document.getElementById('gameOverOverlay');
+    const endGameCard = document.getElementById('endGameCard');
+    const endGameBadge = document.getElementById('endGameBadge');
+    const endGameTitle = document.getElementById('endGameTitle');
+    const respawnBtnText = document.getElementById('respawnBtnText');
     const joinForm = document.getElementById('joinForm');
     const playerNameInput = document.getElementById('playerName');
     const playBtn = document.getElementById('playBtn');
@@ -40,6 +44,7 @@
     let myPlayerId = null;
     let worldWidth = 5000;
     let worldHeight = 5000;
+    let maxCanvasLength = 200;
     let isConnected = false;
     let inGame = false;
 
@@ -116,6 +121,9 @@
                 myPlayerId = msg.playerId;
                 worldWidth = msg.worldWidth;
                 worldHeight = msg.worldHeight;
+                if (msg.maxCanvasLength) {
+                    maxCanvasLength = msg.maxCanvasLength;
+                }
                 break;
 
             case 'state':
@@ -131,7 +139,11 @@
                 break;
 
             case 'game_over':
-                showGameOver(msg.finalScore, msg.reason);
+                showEndScreen(msg.finalScore, msg.reason, false);
+                break;
+
+            case 'victory':
+                showEndScreen(msg.finalScore, msg.reason, true);
                 break;
         }
     }
@@ -194,10 +206,27 @@
         if (e.key === 'Enter') joinGame();
     });
 
-    function showGameOver(score, reason) {
+    function showEndScreen(score, reason, isVictory) {
         inGame = false;
         finalScore.innerText = score;
-        deathReason.innerText = reason || 'Game over';
+        deathReason.innerText = reason || (isVictory ? 'Victory achieved!' : 'Game over');
+
+        if (isVictory) {
+            endGameCard.classList.add('victory-card');
+            endGameBadge.innerText = '👑';
+            endGameBadge.classList.add('victory-badge');
+            endGameTitle.innerText = 'VICTORY!';
+            endGameTitle.classList.add('victory-text');
+            respawnBtnText.innerText = 'PLAY AGAIN';
+        } else {
+            endGameCard.classList.remove('victory-card');
+            endGameBadge.innerText = '💥';
+            endGameBadge.classList.remove('victory-badge');
+            endGameTitle.innerText = 'SNAKE TERMINATED';
+            endGameTitle.classList.remove('victory-text');
+            respawnBtnText.innerText = 'RESPAWN';
+        }
+
         gameOverOverlay.classList.remove('hidden');
     }
 
@@ -208,7 +237,8 @@
         const mySnake = currentSnakes.find(s => s.id === myPlayerId);
         if (mySnake) {
             scoreValue.innerText = mySnake.score;
-            lengthValue.innerText = mySnake.body ? mySnake.body.length : 1;
+            const curLen = mySnake.body ? mySnake.body.length : 1;
+            lengthValue.innerText = `${curLen}/${maxCanvasLength}`;
         }
 
         // Sort leaderboard by score descending

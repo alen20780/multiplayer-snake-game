@@ -1,6 +1,7 @@
 ﻿package main
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -214,4 +215,73 @@ func TestFoodReplenish(t *testing.T) {
 	if len(fm.foodItems) != 50 {
 		t.Errorf("Expected replenish to bring count back to 50, got %d", len(fm.foodItems))
 	}
+}
+
+func TestLastPlayerRemainingWinCondition(t *testing.T) {
+	cfg := DefaultConfig
+	hub := NewHub()
+	game := NewGame(cfg, hub)
+
+	// Create 2 players
+	p1 := &Player{
+		ID:    "player1",
+		Name:  "Hero1",
+		Color: "#00ff88",
+		Snake: NewSnake("player1", "Hero1", "#00ff88", Point{X: 1000, Y: 1000}, DirRight, cfg),
+	}
+	p2 := &Player{
+		ID:    "player2",
+		Name:  "Hero2",
+		Color: "#ff0055",
+		Snake: NewSnake("player2", "Hero2", "#ff0055", Point{X: 2000, Y: 2000}, DirLeft, cfg),
+	}
+	game.players[p1.ID] = p1
+	game.players[p2.ID] = p2
+
+	// Both are alive
+	if len(game.players) != 2 {
+		t.Fatalf("Expected 2 players")
+	}
+
+	// Player 2 dies
+	game.killSnake(p2.Snake, "Hit the electric boundary")
+
+	// Trigger win check
+	game.checkLastPlayerWin("All opponents eliminated - Victory!")
+
+	// P1 should now have won (marked not alive for end of match)
+	if p1.Snake.Alive {
+		t.Errorf("Expected winner snake to be concluded with victory")
+	}
+}
+
+func TestFillCanvasLengthVictory(t *testing.T) {
+	cfg := DefaultConfig
+	cfg.MaxCanvasLength = 20
+	hub := NewHub()
+	game := NewGame(cfg, hub)
+
+	p := &Player{
+		ID:    "p1",
+		Name:  "LongSnake",
+		Color: "#00ff88",
+		Snake: NewSnake("p1", "LongSnake", "#00ff88", Point{X: 1000, Y: 1000}, DirRight, cfg),
+	}
+	p.Snake.Length = 19
+	game.players[p.ID] = p
+
+	// Place food at head
+	game.foodManager.foodItems = make(map[int]*Food)
+	game.foodManager.SpawnFoodAt(1000, 1000, 0, 10)
+
+	// Execute collision resolution
+	game.resolveCollisions()
+
+	if p.Snake.Length < 20 {
+		t.Errorf("Expected snake to reach max length 20, got %d", p.Snake.Length)
+	}
+	if p.Snake.Alive {
+		t.Errorf("Expected snake to conclude game upon filling canvas limit")
+	}
+	fmt.Printf("[Test] Verified snake filled canvas victory at length %d\n", p.Snake.Length)
 }

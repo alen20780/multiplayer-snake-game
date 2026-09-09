@@ -203,12 +203,17 @@ func (c *Client) sendMsg(data []byte) {
 	}
 }
 
-// SendGameOver sends a game over notification to the client
-func (c *Client) SendGameOver(score int, reason string) {
+// SendGameOver sends a game over or victory notification to the client
+func (c *Client) SendGameOver(score int, reason string, won bool) {
+	msgType := MsgTypeGameOver
+	if won {
+		msgType = MsgTypeVictory
+	}
 	msg := GameOverMessage{
-		Type:       MsgTypeGameOver,
+		Type:       msgType,
 		FinalScore: score,
 		Reason:     reason,
+		Won:        won,
 	}
 	bytes, _ := json.Marshal(msg)
 	c.sendMsg(bytes)
@@ -236,11 +241,12 @@ func ServeWs(hub *Hub, game *Game, w http.ResponseWriter, r *http.Request) {
 
 	// Send initial Welcome message
 	welcome := WelcomeMessage{
-		Type:        MsgTypeWelcome,
-		PlayerID:    clientID,
-		WorldWidth:  game.config.WorldWidth,
-		WorldHeight: game.config.WorldHeight,
-		TickRate:    game.config.TickRate,
+		Type:            MsgTypeWelcome,
+		PlayerID:        clientID,
+		WorldWidth:      game.config.WorldWidth,
+		WorldHeight:     game.config.WorldHeight,
+		TickRate:        game.config.TickRate,
+		MaxCanvasLength: game.config.MaxCanvasLength,
 	}
 	welcomeBytes, _ := json.Marshal(welcome)
 	client.sendMsg(welcomeBytes)
