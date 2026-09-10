@@ -11,7 +11,12 @@ import (
 )
 
 func main() {
-	port := flag.String("port", "8080", "HTTP and WebSocket server port")
+	defaultPort := os.Getenv("PORT")
+	if defaultPort == "" {
+		defaultPort = "8080"
+	}
+
+	port := flag.String("port", defaultPort, "HTTP and WebSocket server port")
 	flag.Parse()
 
 	cfg := DefaultConfig
